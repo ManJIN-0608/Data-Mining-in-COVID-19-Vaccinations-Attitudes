@@ -1,0 +1,114 @@
+NN
+
+library(neuralnet)
+setwd("D:/ANU/2022S1/COMP8410/Assignment2")
+aaa <- read.csv("8410_data_Man.csv")
+data<-subset(aaa,select=c("V1_binary","D3_norm","D1_norm","A4_norm","A3_norm","A1_norm","B1_avg_norm","B4_norm","B6_avg_norm","B7_norm"))
+ 
+index <- sample(1:nrow(data),round(0.75*nrow(data)))
+train <- data[index,]
+test <- data[-index,]
+ 
+f <- "V1_binary ~ D3_norm + D1_norm+A4_norm+A3_norm+A1_norm+B1_avg_norm+B4_norm+B6_avg_norm+B7_norm"
+ 
+nn <- neuralnet(f,data=train,hidden=3)
+
+pr.nn <- compute(nn,test[,-1])
+
+predict_ <- pr.nn$net.result
+predict <- ifelse(pr.nn$net.result>0.5,1,0)
+real = test$V1_binary
+table(predict,real)
+
+
+MAE.nn <- sum(abs(real - predict))/nrow(test)
+print(MAE.nn)
+
+error=real - predict
+accuracy=(nrow(test)-sum(abs(error)))/nrow(test)
+
+
+precision=sum(real & predict)/sum(predict)
+recall=sum(predict & real)/sum(real)
+
+F_measure=2*precision*recall/(precision+recall)  
+
+print(accuracy)  
+print(precision)  
+print(recall)  
+print(F_measure) 
+
+
+library(ROCR)       
+pred <- prediction(predict_,real)   
+auc <- performance(pred,'auc')@y.values  
+auc <- as.character(auc)   
+perf <- performance(pred,'tpr','fpr')  
+plot(perf) 
+abline(0,1,lwd=2) 
+legend('bottomright',legend=paste("AUC=",auc),pch=18,col='red', bty='n')
+
+
+
+
+
+
+
+
+
+
+
+plot(real,predict,col='red',main='Real vs predicted NN',pch=18,cex=0.7)
+abline(0,1,lwd=2)
+legend('bottomright',legend='NN',pch=18,col='red', bty='n')
+
+
+
+
+
+
+
+
+
+逻辑回归
+
+library(neuralnet)
+setwd("D:/ANU/2022S1/COMP8410/Assignment2")
+aaa <- read.csv("8410_data_Man.csv")
+data <- subset(aaa,select=c("V1_binary","D3_norm","D1_norm","A4_norm","A3_norm","A1_norm","B1_avg_norm","B4_norm","B6_avg_norm","B7_norm"))
+
+index <- sample(1:nrow(data),round(0.75*nrow(data)))
+train <- data[index,]
+test <- data[-index,]
+ 
+f <- "V1_binary ~ D3_norm + D1_norm+A4_norm+A3_norm+A1_norm+B1_avg_norm+B4_norm+B6_avg_norm+B7_norm"
+pre = glm(f,data=train,family=binomial)
+real=test$V1_binary
+predict_=predict.glm(pre,type="response",newdata=test)
+predict=ifelse(predict_>0.5,1,0)
+
+table(predict,real)
+
+error=real - predict
+accuracy=(nrow(test)-sum(abs(error)))/nrow(test)
+
+
+precision=sum(real & predict)/sum(predict)
+recall=sum(predict & real)/sum(real)
+
+F_measure=2*precision*recall/(precision+recall)  
+
+print(accuracy)  
+print(precision)  
+print(recall)  
+print(F_measure) 
+
+
+library(ROCR)       
+pred <- prediction(predict_,real)   
+auc <- performance(pred,'auc')@y.values  
+auc <- as.character(auc)   
+perf <- performance(pred,'tpr','fpr')  
+plot(perf) 
+abline(0,1,lwd=2) 
+legend('bottomright',legend=paste("AUC=",auc),pch=18,col='red', bty='n')
